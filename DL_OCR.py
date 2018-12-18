@@ -53,41 +53,54 @@ def align_resize(image):
     image_align_resize = cv2.imread(temp_filename)
     return image_align_resize
 
-def text_extract(text):
-    textlines = text.splitlines()
-    #Get Lastname
-    lastname = textlines[0]
-    lastname = ''.join(re.findall('[A-Z]',lastname))
-    #Get Firstname and Middlename
-    firstname = textlines[1]
-    firstname = ''.join(re.findall('[A-Z]', firstname))
-    middlename = textlines[2]
-    middlename = ''.join(re.findall('[A-Z]',middlename))
-    if middlename:    
-        firstname = firstname+' '+middlename
-    #Get Date of Birth and Country
-    dob_cntry = textlines[3]
-    char_pos,_ = re.search('[A-Z]', dob_cntry).span(0)
-    country = dob_cntry[char_pos:]
-    match = re.search(r'\d{2}.\d{2}.\d{4}', dob_cntry)
-    dob = datetime.strptime(match.group(), '%d.%m.%Y').strftime('%d-%m-%Y')
-    #Get Date of DL Issue
-    doi = textlines[5]
-    match = re.search(r'\d{2}.\d{2}.\d{4}', doi)
-    date_of_issue = datetime.strptime(match.group(),'%d.%m.%Y').strftime('%d-%m-%Y')
-    #Get Date of DL Expiry
-    doe= textlines[7]
-    match = re.search(r'\d{2}.\d{2}.\d{4}', doe)
-    date_of_expiry = datetime.strptime(match.group(),'%d.%m.%Y').strftime('%d-%m-%Y')
-    #Get DL Number
-    DL_number = textlines[9]
-    if DL_number[0] == '5' or DL_number[0] == '5.':
-        DL_number = DL_number.split(' ',1)
-        DL_number = DL_number[1]
-    return lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number
+def text_extract(txt1, txt2):
+    textlines = txt1.replace('\n\n', '\n')
+    textlines = textlines.split('\n')
+
+    #Initialize---
+    lastname = ''
+    firstname = ''
+    middlename = ''
+    country = ''
+    dob = ''
+    date_of_issue = ''
+    date_of_expiry = ''
+    DL_number = ''
+    Address = ''
+
+    match = re.search('\d',textlines[2]) #check if 3rd line has middlename 
+    if not match:
+        #print('There are Digits')
+        middlename = textlines.pop(2)
+        middlename = ''.join(re.findall('[A-Z\s]',middlename))
+    
+    lastname = ''.join(re.findall('[A-Z]',textlines[0]))
+    firstname = ''.join(re.findall('[A-Z\s]',textlines[1]))
+    if middlename:
+        firstname = firstname + ' ' + middlename
+
+    dob_match = re.search(r'\d{2}.\d{2}.\d{4}', textlines[2])
+    dob = datetime.strptime(dob_match.group(), '%d.%m.%Y').strftime('%d-%m-%Y')
+
+    char_pos,_ = re.search('[A-Z]', textlines[2]).span(0)
+    country = textlines[2][char_pos:]
+
+    doi_match = re.search(r'\d{2}.\d{2}.\d{4}', textlines[3])
+    date_of_issue = datetime.strptime(doi_match.group(),'%d.%m.%Y').strftime('%d-%m-%Y')
+
+    doe_match = re.search(r'\d{2}.\d{2}.\d{4}', textlines[4])
+    date_of_expiry = datetime.strptime(doe_match.group(),'%d.%m.%Y').strftime('%d-%m-%Y')
+
+    DL_number = textlines[5]
+    m = re.search('[A-Z]',DL_number)
+    pos = (m.start())
+    DL_number = DL_number[pos:pos+19]
+
+    Address = ' '.join(txt2.split('\n'))
+    return lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number, Address
 
 
-file_name = 'F:/Data_Science/Datasets/DL/7.jpg'
+file_name = 'C:/Hari Docs/Dataset/DL/6.jpg'
 dir =  os.path.splitext(file_name)[0]
 image = cv2.imread(file_name)
 
@@ -95,15 +108,15 @@ image_resize = align_resize(image)
 #name_image = name_image[60:140,180:400]
 #dob_country_image = new_image[141:170,180:500]
 crop1 = image_resize[60:250, 180:600]
-#crop2 = image_resize[320:365, 180:600]
+crop2 = image_resize[320:365, 220:600]
 #cv2.imshow('Crop',crop_image)
 #cv2.waitKey(0)
 crop1_clean = clean_image(crop1)
+crop2_clean = clean_image(crop2)
 #addr_image = clean_image(addr_image)
-#cv2.imshow('crop', crop1_clean)
-#cv2.waitKey(0)
-text = pytesseract.image_to_string(crop1_clean)
-print(text)
-#lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number = text_extract(text)
+text1 = pytesseract.image_to_string(crop1_clean)
+text2 = pytesseract.image_to_string(crop2_clean)
+#print(text)
+lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number, Address = text_extract(text1, text2)
 
-#print('LastName - {}\nFirstName - {}\nCountry - {}\nDate of Birth - {}\nDate of Issue - {}\nDate of Expiry - {}\nDL Number - {}'.format(lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number))
+print('LastName - {}\nFirstName - {}\nCountry - {}\nDate of Birth - {}\nDate of Issue - {}\nDate of Expiry - {}\nDL Number - {}\nAddres - {}'.format(lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number, Address))
