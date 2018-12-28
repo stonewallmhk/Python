@@ -95,28 +95,44 @@ def text_extract(txt1, txt2):
     m = re.search('[A-Z]',DL_number)
     pos = (m.start())
     DL_number = DL_number[pos:pos+19]
-
+    
     Address = ' '.join(txt2.split('\n'))
     return lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number, Address
 
 
-file_name = 'C:/Hari Docs/Dataset/DL/6.jpg'
+
+file_name = 'C:/Hari Docs/Dataset/DL1/11.jpg'
 dir =  os.path.splitext(file_name)[0]
 image = cv2.imread(file_name)
-
 image_resize = align_resize(image)
+    ### UK DRIVING LICENSE
 #name_image = name_image[60:140,180:400]
 #dob_country_image = new_image[141:170,180:500]
-crop1 = image_resize[60:250, 180:600]
-crop2 = image_resize[320:365, 220:600]
+name_country_dob_doi_doe_dl = image_resize[60:250, 180:600]
+address = image_resize[320:365, 220:600]
 #cv2.imshow('Crop',crop_image)
 #cv2.waitKey(0)
-crop1_clean = clean_image(crop1)
-crop2_clean = clean_image(crop2)
+name_country_dob_doi_doe_dl_clean = clean_image(name_country_dob_doi_doe_dl)
+address_clean = clean_image(address)
 #addr_image = clean_image(addr_image)
-text1 = pytesseract.image_to_string(crop1_clean)
-text2 = pytesseract.image_to_string(crop2_clean)
+text1 = pytesseract.image_to_string(name_country_dob_doi_doe_dl_clean)
+text2 = pytesseract.image_to_string(address_clean)
 #print(text)
 lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number, Address = text_extract(text1, text2)
 
 print('LastName - {}\nFirstName - {}\nCountry - {}\nDate of Birth - {}\nDate of Issue - {}\nDate of Expiry - {}\nDL Number - {}\nAddres - {}'.format(lastname,firstname,country,dob,date_of_issue,date_of_expiry,DL_number, Address))
+
+'''     ###QATAR DRIVING LICENSE
+id_dob_doe = image_resize[150:280, 180:400]
+country = image_resize[300:350, 5:400]
+name = image_resize[430:480, :500]
+id_dob_doe_clean = clean_image(id_dob_doe)
+country_clean = clean_image(country)
+name_clean = clean_image(name)
+cv2.imshow('Crop', name_clean)
+cv2.waitKey(0)
+text1 = pytesseract.image_to_string(id_dob_doe_clean)
+text2 = pytesseract.image_to_string(country)
+text3 = pytesseract.image_to_string(name_clean)
+print(text1, text2, text3)
+'''
