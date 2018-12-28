@@ -1,0 +1,20 @@
+import cv2
+import os
+
+file_name = 'C:/Hari Docs/Dataset/DL/2.jpg'
+dir =  os.path.splitext(file_name)[0]
+image = cv2.imread(file_name)
+
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+(minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
+'''blur = image.copy()
+cv2.circle(blur, maxLoc, 5, (255,0,0), 2)
+cv2.imshow('Glare', blur)
+cv2.waitKey(0)'''
+if maxVal > 253 and (minVal in range(0,20)):
+    print('Glare detected')
+    print(maxVal)
+    print(minVal)
+else:   print('Clean Image')
