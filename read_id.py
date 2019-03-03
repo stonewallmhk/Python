@@ -39,7 +39,7 @@ def read_image(path, filename):
         image = cv2.imread(os.path.join(path,filename),0)
         return {filename:image}
     except:
-        return {filename:"Erreur : image illisible"}
+        return {filename:"Error : image illisible"}
 '''
 def extract_images_from_pdf(path, filename):
     newpath = path + "images_from_pdf"
@@ -267,6 +267,9 @@ def read_if_MRZ_and_new(liste_MRZ, contour, img, factor, filename):
             texte_MRZ = read_MRZ(prepared_roi)
             if '<<' in texte_MRZ:
                 print(texte_MRZ)
+                f = open('F:/Data_Science/Datasets/PP1/mrz.txt', 'w+')
+                f.write(texte_MRZ)
+                f.close
                 result = process_MRZ(texte_MRZ)
                 if result is not None:
                     info_MRZ = {'filename':filename, 'resultat':'Bande MRZ détéctée', 'type':result['type'], 'code':result['code'], 'nom':result['nom'], 'prenom':result['prenom'], 'date_naissance':result['date_naissance'], 'nationalite':result['nationalite'], 'sexe':result['sexe'], 'date_validite':result['date_validite'], 'statut':result['statut'], 'MRZ':result['MRZ']}
@@ -303,6 +306,7 @@ def process_MRZ(texte):
     regex_pass_fra = ".*([P|D|F]<)([F|P|E][R|P][A|8])(?P<last_name>.+?(?=<<))<<(?P<first_name>.+?(?=<))<(?P<second_name>.+?(?=<))<(?P<third_name>.+?(?=<))(.*)\\n(.*)[F|P|E][R|P][A|8](?P<birth_year>.{2})(?P<birth_month>.{2})(?P<birth_day>.{2}).{1}(?P<sex>.{1})(?P<expiration_year>.{2})(?P<expiration_month>.{2})(?P<expiration_day>.{2}).*"
     result = {}
     result['MRZ'] = clean_MRZ
+    '''
     pattern_cni_fra = pattern_matching(regex_cni_fra,clean_MRZ)
     pattern_pass_fra = pattern_matching(regex_pass_fra,clean_MRZ)
     if pattern_cni_fra:
@@ -354,7 +358,8 @@ def process_MRZ(texte):
             result['date_validite'] = None  
             result['statut'] = None
         else:
-           result = None 
+           result = None
+        ''' 
     return result
 
 def get_MRZ(filename, img):
@@ -398,30 +403,41 @@ def process_file(file):
                 liste_MRZ = get_MRZ(key, value)
                 if len(liste_MRZ) > 0:
                     for MRZ in liste_MRZ:
-                       mrz_complet.append(MRZ[0])
+                       #mrz_complet.append(MRZ[0])
+                       print(MRZ[0])
                 else:
                     liste_MRZ = get_MRZ(key, rotate(value))
                     if len(liste_MRZ) > 0:
                         for MRZ in liste_MRZ:
-                            mrz_complet.append(MRZ[0])
+                            #mrz_complet.append(MRZ[0])
+                            print(MRZ[0])
                     else:
                         temp = {'filename':key, 'resultat':'Aucune bande MRZ détéctée', 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
-                        mrz_complet.append(temp)
+                        #mrz_complet.append(temp)
+                        print(temp)
             except:
                 temp = {'filename':key, 'resultat':'Erreur image illisible', 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
-                mrz_complet.append(temp)
+                #mrz_complet.append(temp)
+                print(temp)
         else:
             temp = {'filename':key, 'resultat':value, 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
-            mrz_complet.append(temp)
+            #mrz_complet.append(temp)
+            print(temp)
     
 if __name__ == "__main__":
-    mrz_complet = []
-    path_to_files = ('C:/Hari Docs/Dataset/Passport_V3/')
+    input_file = input('Enter Filename Location: ')
+    #mrz_complet = []
+    input_file = input_file.replace('\\','/')
+    path_to_files = os.path.dirname(input_file) + '/'
+    #path_to_files = ('C:/Hari Docs/Dataset/Passport_V3/')
+    file = os.path.split(input_file)[1]
+    process_file(file)
+    '''
     files = os.listdir(path_to_files)
     for file in files:
         process_file(file)
     df_MRZ = pd.DataFrame(mrz_complet)
     df_MRZ.to_csv("result.csv", sep=";", encoding="latin-1")
-
+    '''
 #filepath = 'C:/Hari Docs/Dataset/Passports_V2/1-001.jpg'    
 #process_file(filepath)
