@@ -10,6 +10,7 @@ import numpy as np
 import re
 import pandas as pd
 import datetime as dt 
+from datetime import datetime
 import os, os.path
 import math
 import pytesseract
@@ -266,15 +267,19 @@ def read_if_MRZ_and_new(liste_MRZ, contour, img, factor, filename):
             prepared_roi = prep_MRZ(roi)
             texte_MRZ = read_MRZ(prepared_roi)
             if '<<' in texte_MRZ:
-                print(texte_MRZ)
-                f = open('F:/Data_Science/Datasets/PP1/mrz.txt', 'w+')
-                f.write(texte_MRZ)
-                f.close
+                #print(texte_MRZ)
+                #f = open('F:/Data_Science/Datasets/PP1/mrz.txt', 'w+')
+                #f.write(texte_MRZ)
+                #f.close
                 result = process_MRZ(texte_MRZ)
+                #print(result)
+                
                 if result is not None:
-                    info_MRZ = {'filename':filename, 'resultat':'Bande MRZ détéctée', 'type':result['type'], 'code':result['code'], 'nom':result['nom'], 'prenom':result['prenom'], 'date_naissance':result['date_naissance'], 'nationalite':result['nationalite'], 'sexe':result['sexe'], 'date_validite':result['date_validite'], 'statut':result['statut'], 'MRZ':result['MRZ']}
+                    info_MRZ = {'Last Name':result['lname'], 'First Name':result['fname'],'Country':result['country'], 'Date of Birth':result['dob'], 'Sex':result['sex'], 'Date of Expiry':result['doe'], 'Nationality':result['nationality']}
                     new_MRZ = [info_MRZ, new_contour]
+                    #new_MRZ = [info_MRZ]
                     liste_MRZ.append(new_MRZ)
+                
     return liste_MRZ
 
 def pattern_matching(regex,string):
@@ -302,10 +307,47 @@ def process_MRZ(texte):
             else:
                 clean_MRZ = clean_MRZ + "\n" + bande
     clean_MRZ = clean_MRZ.replace(" ", "")
-    regex_cni_fra = ".*([I|L|T|Z|U][O|D|B|P])([F|P|E|M][R|P|-|B][A|8])(?P<last_name>.+?(?=<<))(.*)\\n+(?P<card_number>.{13})(?P<first_name>.+?(?=<<|\w+))<+(?P<first_name2>.*?(?=<|\d))?<*(?P<first_name3>[A-Z]*?(?=<|\d))?<*?(?P<birth_date_year>.{2})?(?P<birth_date_month>.{2})?(?P<birth_date_day>.{2})([0-9]*)(?P<sex>[MF]{1})?."
-    regex_pass_fra = ".*([P|D|F]<)([F|P|E][R|P][A|8])(?P<last_name>.+?(?=<<))<<(?P<first_name>.+?(?=<))<(?P<second_name>.+?(?=<))<(?P<third_name>.+?(?=<))(.*)\\n(.*)[F|P|E][R|P][A|8](?P<birth_year>.{2})(?P<birth_month>.{2})(?P<birth_day>.{2}).{1}(?P<sex>.{1})(?P<expiration_year>.{2})(?P<expiration_month>.{2})(?P<expiration_day>.{2}).*"
+    #regex_cni_fra = ".*([I|L|T|Z|U][O|D|B|P])([F|P|E|M][R|P|-|B][A|8])(?P<last_name>.+?(?=<<))(.*)\\n+(?P<card_number>.{13})(?P<first_name>.+?(?=<<|\w+))<+(?P<first_name2>.*?(?=<|\d))?<*(?P<first_name3>[A-Z]*?(?=<|\d))?<*?(?P<birth_date_year>.{2})?(?P<birth_date_month>.{2})?(?P<birth_date_day>.{2})([0-9]*)(?P<sex>[MF]{1})?."
+    #regex_pass_fra = ".*([P|D|F]<)([F|P|E][R|P][A|8])(?P<last_name>.+?(?=<<))<<(?P<first_name>.+?(?=<))<(?P<second_name>.+?(?=<))<(?P<third_name>.+?(?=<))(.*)\\n(.*)[F|P|E][R|P][A|8](?P<birth_year>.{2})(?P<birth_month>.{2})(?P<birth_day>.{2}).{1}(?P<sex>.{1})(?P<expiration_year>.{2})(?P<expiration_month>.{2})(?P<expiration_day>.{2}).*"
     result = {}
-    result['MRZ'] = clean_MRZ
+    #result['MRZ'] = clean_MRZ
+    print(clean_MRZ)
+    l1, l2 = clean_MRZ.splitlines()
+    #print(len(l1), len(l2))
+    if (len(l1) == 44 and len(l2) == 44):
+        print('Parsing MRZ...')
+        result['country'] = replace_car(l1[2:5], False)
+        name = l1[5:43]
+        #name = name.replace(' ', '')
+        name = name.split('<<',1)
+        result['lastname'] = replace_car(name[0], False)
+        result['firstname']  = replace_car(name[1], False)
+        result['docnumber'] = l2[0:9]
+        check1 = l2[9]
+        result['nationality'] = replace_car(l2[10:13], False)
+        #print(result)
+        dob = l2[13:19]
+        print(dob)
+        now = datetime.now().year
+        now = now % 2000
+        print('Year: {}'.format(now))
+        dob_yr = int(dob[:2])
+        if (now - dob_yr) < 0:
+            dob_yr = dob_yr + 1900
+        else:
+            dob_yr = dob_yr + 2000
+        result['dob'] = dob[4:] + '-' + dob[2:4] + '-' + str(dob_yr)
+        check2 = l2[19]
+        result['sex'] = l2[20]
+        doe = l2[21:27]
+        result['doe'] = datetime.strptime(doe, '%y%m%d').strftime('%d-%m-%Y')
+        pnum = l2[28:42]
+        check3 = l2[42]
+        check4 = l2[43]
+        
+    else:
+        result = None
+       
     '''
     pattern_cni_fra = pattern_matching(regex_cni_fra,clean_MRZ)
     pattern_pass_fra = pattern_matching(regex_pass_fra,clean_MRZ)
@@ -396,6 +438,26 @@ def get_MRZ(filename, img):
     return liste_MRZ
 
 def process_file(file):
+    try:
+        image = cv2.imread(os.path.join(path_to_files,file),0)
+        list_MRZ = get_MRZ(file, image)
+        if len(list_MRZ) > 0:
+            for MRZ in list_MRZ:
+                #mrz_complet.append(MRZ[0])
+                print(MRZ[0])
+        else:
+            list_MRZ = get_MRZ(key, rotate(value))
+            if len(list_MRZ) > 0:
+                for MRZ in list_MRZ:
+                    #mrz_complet.append(MRZ[0])
+                    print(MRZ[0])
+            else:
+                print('MRZ extract error...')
+    except:
+        print('Image read error...')
+    
+'''
+def process_file(file):
     images = load_images_from_file(path_to_files, file)
     for key, value in images.items():
         if type(value) is not str:
@@ -414,16 +476,16 @@ def process_file(file):
                     else:
                         temp = {'filename':key, 'resultat':'Aucune bande MRZ détéctée', 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
                         #mrz_complet.append(temp)
-                        print(temp)
+                        print('1: ',temp)
             except:
                 temp = {'filename':key, 'resultat':'Erreur image illisible', 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
                 #mrz_complet.append(temp)
-                print(temp)
+                print('2: ',temp)
         else:
             temp = {'filename':key, 'resultat':value, 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
             #mrz_complet.append(temp)
-            print(temp)
-    
+            print('3: ',temp)
+'''    
 if __name__ == "__main__":
     input_file = input('Enter Filename Location: ')
     #mrz_complet = []
