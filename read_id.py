@@ -272,14 +272,14 @@ def read_if_MRZ_and_new(liste_MRZ, contour, img, factor, filename):
                 #f.write(texte_MRZ)
                 #f.close
                 result = process_MRZ(texte_MRZ)
-                #print(result)
                 
                 if result is not None:
-                    info_MRZ = {'Last Name':result['lname'], 'First Name':result['fname'],'Country':result['country'], 'Date of Birth':result['dob'], 'Sex':result['sex'], 'Date of Expiry':result['doe'], 'Nationality':result['nationality']}
+                    #print('Info_MRZ process...')
+                    info_MRZ = {'Last Name':result['lastname'], 'First Name':result['firstname'],'Country':result['country'], 'Date of Birth':result['dob'], 'Sex':result['sex'], 'Date of Expiry':result['doe'], 'Nationality':result['nationality']}
                     new_MRZ = [info_MRZ, new_contour]
                     #new_MRZ = [info_MRZ]
                     liste_MRZ.append(new_MRZ)
-                
+    #print(liste_MRZ)
     return liste_MRZ
 
 def pattern_matching(regex,string):
@@ -315,7 +315,7 @@ def process_MRZ(texte):
     l1, l2 = clean_MRZ.splitlines()
     #print(len(l1), len(l2))
     if (len(l1) == 44 and len(l2) == 44):
-        print('Parsing MRZ...')
+        #print('Parsing MRZ...')
         result['country'] = replace_car(l1[2:5], False)
         name = l1[5:43]
         #name = name.replace(' ', '')
@@ -327,10 +327,10 @@ def process_MRZ(texte):
         result['nationality'] = replace_car(l2[10:13], False)
         #print(result)
         dob = l2[13:19]
-        print(dob)
+        #print(dob)
         now = datetime.now().year
         now = now % 2000
-        print('Year: {}'.format(now))
+        #print('Year: {}'.format(now))
         dob_yr = int(dob[:2])
         if (now - dob_yr) < 0:
             dob_yr = dob_yr + 1900
@@ -344,7 +344,7 @@ def process_MRZ(texte):
         pnum = l2[28:42]
         check3 = l2[42]
         check4 = l2[43]
-        
+
     else:
         result = None
        
@@ -438,62 +438,52 @@ def get_MRZ(filename, img):
     return liste_MRZ
 
 def process_file(file):
+    output_path = path_to_files + os.path.splitext(file)[0] + '.txt'
     try:
         image = cv2.imread(os.path.join(path_to_files,file),0)
         list_MRZ = get_MRZ(file, image)
         if len(list_MRZ) > 0:
             for MRZ in list_MRZ:
                 #mrz_complet.append(MRZ[0])
-                print(MRZ[0])
+                #print(MRZ[0])
+                f = open(output_path, 'a+')                 
+                for key, val in MRZ[0].items():
+                    f = open(output_path, 'a+')
+                    f.write('\n' + key + ': ' + val)
+                    f.close()
         else:
             list_MRZ = get_MRZ(key, rotate(value))
             if len(list_MRZ) > 0:
                 for MRZ in list_MRZ:
                     #mrz_complet.append(MRZ[0])
-                    print(MRZ[0])
+                    for key, val in MRZ[0].items():
+                        f = open(output_path, 'a+')
+                        f.write('\n' + key + ': ' + val)
+                        f.close()
             else:
                 print('MRZ extract error...')
+
+            print('MRZ extract error...')
     except:
         print('Image read error...')
     
-'''
-def process_file(file):
-    images = load_images_from_file(path_to_files, file)
-    for key, value in images.items():
-        if type(value) is not str:
-            try:
-                liste_MRZ = get_MRZ(key, value)
-                if len(liste_MRZ) > 0:
-                    for MRZ in liste_MRZ:
-                       #mrz_complet.append(MRZ[0])
-                       print(MRZ[0])
-                else:
-                    liste_MRZ = get_MRZ(key, rotate(value))
-                    if len(liste_MRZ) > 0:
-                        for MRZ in liste_MRZ:
-                            #mrz_complet.append(MRZ[0])
-                            print(MRZ[0])
-                    else:
-                        temp = {'filename':key, 'resultat':'Aucune bande MRZ détéctée', 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
-                        #mrz_complet.append(temp)
-                        print('1: ',temp)
-            except:
-                temp = {'filename':key, 'resultat':'Erreur image illisible', 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
-                #mrz_complet.append(temp)
-                print('2: ',temp)
-        else:
-            temp = {'filename':key, 'resultat':value, 'type':None, 'code':None, 'nom':None, 'prenom':None, 'date_naissance':None, 'nationalite':None, 'sexe':None, 'date_validite':None, 'statut':None, 'MRZ':None}
-            #mrz_complet.append(temp)
-            print('3: ',temp)
-'''    
+    return 
+
 if __name__ == "__main__":
     input_file = input('Enter Filename Location: ')
     #mrz_complet = []
     input_file = input_file.replace('\\','/')
-    path_to_files = os.path.dirname(input_file) + '/'
-    #path_to_files = ('C:/Hari Docs/Dataset/Passport_V3/')
-    file = os.path.split(input_file)[1]
-    process_file(file)
+    
+    if os.path.isfile(input_file):
+        path_to_files = os.path.dirname(input_file) + '/'
+        file = os.path.split(input_file)[1]
+        process_file(file)
+    elif os.path.isdir(input_file):
+        path_to_files = input_file + '/'
+        for file in os.listdir(path_to_files):
+            print('Processing file: {}'.format(file))
+            process_file(file)
+        
     '''
     files = os.listdir(path_to_files)
     for file in files:
