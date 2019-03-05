@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Dec 22 10:56:06 2018
 
-@author: DAVIAUD
-"""
 import cv2
 import imutils
 import numpy as np
