@@ -1,0 +1,5 @@
+****Data Exploration*****
+1. If there are too many outlier in the data, we can try to use the trimmed mean or winsorized mean 
+2. Transforming the data -- can be used to fix the skewed data or to fix curved line in a scatter plot. We can Yukey's ladder of powers method for fixing this.
+3. K-Means algorithm is used to find the categorical variable.
+4. 
